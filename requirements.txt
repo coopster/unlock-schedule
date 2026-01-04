@@ -1,0 +1,6 @@
+google-api-python-client==2.187.0
+google-auth==2.45.0
+fastapi
+uvicorn[standard]
+jinja2
+python-multipart

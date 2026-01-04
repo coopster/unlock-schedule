@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HMS Unlock Schedule</title>
+    <link rel="stylesheet" href="/static/app.css" />
+  </head>
+  <body>
+    <main class="container">
+      <header class="header">
+        <h1>HMS Unlock Schedule</h1>
+        <p class="subtle">
+          Showing 7 days starting at local midnight. Default is today; pick another date to shift the window.
+        </p>
+      </header>
+
+      <section class="card">
+        <form method="get" action="/">
+          <label for="start_date">Start date</label>
+          <input id="start_date" name="start_date" type="date" value="{{ start_date }}" />
+          <button type="submit">Load</button>
+        </form>
+        <div class="subtle">Window: {{ window_start.isoformat() }} → {{ window_end.isoformat() }}</div>
+      </section>
+
+      {% if error %}
+        <section class="card error">
+          <h2>Calculation error</h2>
+          <pre>{{ error }}</pre>
+        </section>
+      {% else %}
+
+      <section class="card">
+        <h2>Intervals</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Interval</th>
+              <th>Start</th>
+              <th>End</th>
+              {% for d in day_names %}
+                <th>{{ d }}</th>
+              {% endfor %}
+              <th>Holidays</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in rows %}
+              <tr>
+                <td>{{ r["Interval"] }}</td>
+                <td>{{ r["Start"] }}</td>
+                <td>{{ r["End"] }}</td>
+                {% for d in day_names %}
+                  <td class="center">{{ "✓" if r[d] else "" }}</td>
+                {% endfor %}
+                <td class="center">{{ "✓" if r["Holidays"] else "" }}</td>
+              </tr>
+            {% endfor %}
+            {% if not rows %}
+              <tr>
+                <td colspan="11" class="subtle">No rows available.</td>
+              </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </section>
+      {% endif %}
+
+      <footer class="footer subtle">
+        JSON: <a href="/api/week?start_date={{ start_date }}">/api/week</a>
+      </footer>
+    </main>
+  </body>
+</html>
+

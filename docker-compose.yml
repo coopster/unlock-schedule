@@ -1,0 +1,26 @@
+services:
+  unlock-scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: unlock-scheduler:latest
+    container_name: unlock-scheduler
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      # Override as needed
+      DEFAULT_TIMEZONE: "America/New_York"
+      # Path inside the container to the JSON credential:
+      GCAL_SERVICE_ACCOUNT_JSON: "/secrets/service-account.json"
+      # Optional Workspace delegation target (leave empty if not used)
+      GCAL_DELEGATE: ""
+    volumes:
+      # Put your credentials file at ./secrets/service-account.json
+      - ./secrets:/secrets:ro
+    # Hardening that generally works on Synology
+    read_only: true
+    tmpfs:
+      - /tmp
+    restart: unless-stopped
