@@ -28,7 +28,7 @@ MERGE_TOUCHING = True
 DEFAULT_OPTIMIZE = os.environ.get("HMS_UNLOCK_OPTIMIZE", "").lower() in {"1", "true", "yes", "on"}
 
 # Output CSV (can be overridden via CLI)
-DEFAULT_OUTPUT_CSV = os.environ.get("HMS_UNLOCK_OUTPUT_CSV", "hms_unlock_schedule_template_next_week.csv")
+DEFAULT_OUTPUT_CSV = os.environ.get("HMS_UNLOCK_OUTPUT_CSV", "hms_unlock_schedule_template.csv")
 
 # All CSV outputs are written under this folder (relative to project root/cwd).
 OUTPUT_DIR = os.environ.get("HMS_UNLOCK_OUTPUT_DIR", "out")

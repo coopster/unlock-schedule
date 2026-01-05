@@ -20,8 +20,9 @@
           <label for="start_date">Start date</label>
           <input id="start_date" name="start_date" type="date" value="{{ start_date }}" />
           <button type="submit">Load</button>
+          <a class="button secondary" href="/?start_date={{ today }}">Today</a>
         </form>
-        <div class="subtle">Window: {{ window_start.isoformat() }} → {{ window_end.isoformat() }}</div>
+        <div class="subtle">Window: {{ window_label }}</div>
       </section>
 
       {% if error %}
@@ -68,9 +69,14 @@
       {% endif %}
 
       <footer class="footer subtle">
-        JSON: <a href="/api/week?start_date={{ start_date }}">/api/week</a>
+        Downloads:
+        <a href="/download/week.csv?start_date={{ start_date }}">CSV</a>
+        ·
+        <a href="/download/week.json?start_date={{ start_date }}">JSON</a>
+        <div style="float: right;">
+          {% if version %} Version {{ version }}{% endif %}
+        </div>
       </footer>
     </main>
   </body>
 </html>
-

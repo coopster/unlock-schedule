@@ -2,7 +2,7 @@
 
 Creates a weekly HMS unlock schedule configuration based on a selected week in the "Door Access" PSCRC Google Calendar.
 
-The church administrator can run this at any time to get the suggested HMS unlock schedule configuration based on a google calendar.
+The church administrator can run this at any time to get the suggested HMS unlock schedule configuration based on the PSCRC Door Access google calendar.
 
 Features:
 
@@ -12,7 +12,6 @@ Features:
 - Provides both **CLI** and **HTML UI**.
 - Runs as a **Docker container** on Synology DS720+ (or any x86_64 system).
 
----
 
 ## How it Works
 
@@ -24,45 +23,97 @@ Features:
    - ✔ = unlock during this interval on that day.
    - blank = keep locked.
 
----
+### Google service account information:
 
-### 1. Prerequisites
+    Google cloud project name: PSCRC-HMS
+    Project ID: pscrc-hms
+    Name: PSCRC Automation
+    Service account ID: pscrc-automation
+    email address: pscrc-automation@pscrc-hms.iam.gserviceaccount.com
+
+### Calendar
+
+    Google Account: pscrc.video@gmail.com
+    Name: Building Access
+    Calendar ID: c5rf35bev99fst7teu5fdvfs2i6ra6uq@import.calendar.google.com
+    Visibility: Only to designated PSCRC staff and support (and this service account)
+
+## Prerequisites
 
 - Python 3.11+
 - A Google **service account** JSON file with access to your calendar.
-  - share the calendar with the service account’s email.
+  - share the calendar with the service account’s email
+  - generate an application key json file, and store in a secrets folder outside this repo and only visible to the account running this application.
 
-### 2. Setup
+## Building and Testing Locally
+
+### 1. Setup
+
+Clone the repo locally.
 
 ```bash
-git clone https://github.com/your-repo/unlock-scheduler.git
-cd unlock-scheduler
+git clone https://github.com/your-repo/unlock-schedule.git
+cd unlock-schedule
+```
 
+Set up the virtual environment with all required packages.
+
+```bash
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 3. Run the app
+Locate the service account app key (secrets) file and point to it.
 
 ```bash
 export GCAL_SERVICE_ACCOUNT_JSON=./dir-to-secrets/service-account.json
+```
 
+
+### 2. Run with the commnd line (CLI)
+
+Usage
+```shell
+python -m unlock_schedule --help
+
+usage: python -m unlock_schedule [-h] [--start-date START_DATE] [--pad-before PAD_BEFORE] [--pad-after PAD_AFTER] [--optimize] [--output OUTPUT]
+
+Generate HMS unlock schedule CSV from Google Calendar.
+
+options:
+  -h, --help            show this help message and exit
+  --start-date START_DATE
+                        Start date for 7-day window in YYYY-MM-DD (local time). If omitted, uses today.
+  --pad-before PAD_BEFORE
+                        Minutes to unlock early (default: 0).
+  --pad-after PAD_AFTER
+                        Minutes to relock late (default: 0).
+  --optimize            Use optimized interval decomposition to minimize number of HMS intervals.
+  --output OUTPUT       Output CSV path (default: hms_unlock_schedule_template.csv).
+```
+
+
+### 3. Run the web app locally
+
+Use `--reload` for dev testing.
+
+```bash
 uvicorn unlock_schedule.app.main:app --reload
 ```
 
-Visit: [http://localhost:8000](http://localhost:8000)
+Visit with your browser: [http://localhost:8000](http://localhost:8000)
 
 ---
 
 ## Deploying on Synology DS720+
 
-The DS720+ runs **x86_64**, so the provided Dockerfile works.
+The DS720+ runs **x86_64**, and we deploy using Docker.
 
 ### 1. Prepare files on Synology
 
 1. Create a folder:  
-   `/volume1/docker/unlock-scheduler/`
+   `/volume1/docker/unlock-schedule/`
 
 2. Copy into it:
    - `main.py`
@@ -71,15 +122,15 @@ The DS720+ runs **x86_64**, so the provided Dockerfile works.
    - `docker-compose.yml`
    - `README.md`
 
-3. Create a `secrets/` subfolder and put your Google service-account JSON there:  
-   `/volume1/docker/unlock-scheduler/secrets/service-account.json`
+3. Create a `secrets/` subfolder somewhere on the Synology NAS where only your build and run account can read it, and put your Google service-account JSON there:  
+   `/volume1/docker/unlock-schedule/secrets/service-account.json`
 
 ### 2. Build and Run (Option A: Docker Compose)
 
 On Synology **Container Manager**:
 
 - Go to **Projects** → **Add**.
-- Point to `/volume1/docker/unlock-scheduler/`.
+- Point to `/volume1/docker/unlock-schedule/`.
 - Deploy.
 
 This builds and runs the container as defined in `docker-compose.yml`.
@@ -89,7 +140,7 @@ This builds and runs the container as defined in `docker-compose.yml`.
 SSH into the Synology and run:
 
 ```bash
-cd /volume1/docker/unlock-scheduler
+cd /volume1/docker/unlock-schedule
 docker compose up -d --build
 ```
 
@@ -107,31 +158,29 @@ Visit:
 | `CALENDAR_ID` | Calendar to read (set in `.env` for local / `env_file` for Docker) | *(required for this repo’s `.env` workflow)* |
 | `GCAL_SERVICE_ACCOUNT_JSON` | Path inside container to the service account JSON | `/secrets/service-account.json` |
 
+## Version
+
+- Default version lives in `unlock_schedule/version.py`.
+- Override at runtime with `UNLOCK_SCHEDULE_VERSION=...` (or `APP_VERSION=...`).
+- Docker builds bake in a version via `APP_VERSION=... ./build.sh` (or set `APP_VERSION` when running `docker compose build`).
+
 ---
 
 ## Security Notes
 
 - The container runs as a **non-root user**.
 - The filesystem is **read-only** except for `/tmp`.
-- Secrets are mounted read-only from `./secrets/`.
+- Secrets are mounted read-only from `./secrets/` accessible only to this user.
 
 ---
 
 ## Gotchas & Notes
 
-- **Service Account Access**:  
-  - For **Google Workspace**: Admin must enable domain-wide delegation, or you must share the calendar with the service account email.  
-  - For **personal Gmail**: Share the calendar directly with the service account.
+- **Service Account Access**: You must share the calendar with the service account email.
 
-- **All-day events** are treated as **00:00–24:00** unlocks.
-
-- **Mixed (◐) slots**: Occur if, for example, one Monday has an event and another Monday doesn’t. See the **exceptions list** under the schedule table for exact dates.
+- **All-day events** are ignored.
 
 - **Synology Firewall**: Ensure port 8000 is allowed if accessing outside LAN.
-
-- **Timezone**: Always set `DEFAULT_TIMEZONE` (e.g., `Pacific/Honolulu` for Oahu). Otherwise events may be misaligned.
-
-- **Healthcheck**: Container has a built-in `/` healthcheck. Synology may restart it automatically if health fails.
 
 ---
 
@@ -141,61 +190,6 @@ Visit:
 2. Run the app and open [http://localhost:8000](http://localhost:8000) (or NAS IP).
 3. See a Sun→Sat grid of time intervals when the door should be unlocked (blank = locked).
 
-
-## Running Locally (testing)
-
-1. Create a virtual env
-```shell
-virtualenv .venv --python=python3
-source .venv/activate
-```
-2. Install required packages into the virtual env
-```shell
-pip install -r requirements.txt
-```
-3. Set env variable to the google calendar app key file
-```shell
-export GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account-key.json
-```
-
-## Web UI
-
-Auto reload for dev testing only.
-```shell
-uvicorn unlock_schedule.app.main:app --reload
-```
-
-Defaults to starting today; you can also pass `?start_date=YYYY-MM-DD`.
-
-## CLI 
-
-Usage
-```shell
-python -m unlock_schedule --help
-
-usage: python -m unlock_schedule [-h] [--start-date START_DATE] [--pad-before PAD_BEFORE] [--pad-after PAD_AFTER]
-                                 [--optimize] [--output OUTPUT]
-
-Generate HMS unlock schedule CSV from Google Calendar.
-
-options:
-  -h, --help            show this help message and exit
-  --start-date START_DATE
-                        Start date for 7-day window in YYYY-MM-DD (local time). If omitted, uses today.
-  --pad-before PAD_BEFORE
-                        Minutes to unlock early (default: 0).
-  --pad-after PAD_AFTER
-                        Minutes to relock late (default: 0).
-  --optimize            Use optimized interval decomposition to minimize number of HMS intervals.
-  --output OUTPUT       Output CSV path (default: hms_unlock_schedule_template_next_week.csv).
-```
-
-Example writes to stdout a summary of the settings and writes a csv into the out folder.
-```shell
-python -m unlock_schedule
-```
-
-If you need a different 7-day window, pass `--start-date YYYY-MM-DD` (window starts at local midnight for that date).
 
 ## Tests
 ```shell
@@ -220,4 +214,6 @@ python -m unittest discover -s tests -q
 
 ## Futures
 
-- Add UI controls to download schedule in CSV or JSON
+- Agent feature to update HMS with this schedule
+- Manage schedule for periodically synchronizing HMS with this calendar
+- Audit logging

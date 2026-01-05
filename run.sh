@@ -7,10 +7,10 @@ if [ ! -f "./secrets/service-account.json" ]; then
   exit 1
 fi
 
-docker rm -f unlock-scheduler >/dev/null 2>&1 || true
+docker rm -f unlock-schedule >/dev/null 2>&1 || true
 
 docker run -d \
-  --name unlock-scheduler \
+  --name unlock-schedule \
   -p 8000:8000 \
   -e DEFAULT_TIMEZONE="America/New_York" \
   -e CALENDAR_ID="${CALENDAR_ID:-primary}" \
@@ -20,4 +20,4 @@ docker run -d \
   --read-only \
   --tmpfs /tmp \
   --restart unless-stopped \
-  unlock-scheduler:latest
+  unlock-schedule:latest

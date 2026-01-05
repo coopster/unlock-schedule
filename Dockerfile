@@ -30,6 +30,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 ARG APP_USER=appuser
 ARG APP_UID=10001
 ARG APP_GID=10001
+ARG APP_VERSION=dev
 RUN groupadd -g ${APP_GID} ${APP_USER} \
   && useradd -u ${APP_UID} -g ${APP_GID} -m -s /usr/sbin/nologin ${APP_USER}
 
@@ -41,23 +42,21 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --no-index --find-links=/wheels -r requirements.txt
 
 # Copy app
-COPY main.py /app/main.py
-COPY google_calendar_client.py /app/google_calendar_client.py
-COPY schedule_logic.py /app/schedule_logic.py
+COPY unlock_schedule /app/unlock_schedule
+
+# Burn version into the image (can be overridden at runtime).
+ENV UNLOCK_SCHEDULE_VERSION=${APP_VERSION}
 
 # App defaults (you can override in compose/env)
-ENV DEFAULT_TIMEZONE=America/New_York \
-    DEFAULT_CALENDAR_ID=primary \
-    GCAL_SERVICE_ACCOUNT_JSON=/secrets/service-account.json \
-    GCAL_DELEGATE=""
+ENV GCAL_SERVICE_ACCOUNT_JSON=/secrets/service-account.json
 
 EXPOSE 8000
 
 # Basic healthcheck on the root page
 HEALTHCHECK --interval=30s --timeout=3s --retries=5 \
-  CMD curl -fsS http://localhost:8000/ || exit 1
+  CMD curl -fsS http://localhost:8000/health || exit 1
 
 USER ${APP_USER}
 
 # Uvicorn server
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips", "*"]
+CMD ["uvicorn", "unlock_schedule.app.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips", "*"]
