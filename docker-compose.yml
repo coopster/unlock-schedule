@@ -1,11 +1,6 @@
 services:
   unlock-schedule:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        APP_VERSION: ${APP_VERSION:-dev}
-    image: unlock-schedule:latest
+    image: unlock-schedule:${APP_VERSION:-latest}
     container_name: unlock-schedule
     ports:
       - "8000:8000"
@@ -15,9 +10,10 @@ services:
       # Path inside the container to the JSON credential:
       GCAL_SERVICE_ACCOUNT_JSON: "/secrets/service-account.json"
     volumes:
-      # Put your credentials file at ./secrets/service-account.json
-      - ./secrets:/secrets:ro
-    # Hardening that generally works on Synology
+      # Bind to a read-only location on the Synology drive, like:
+      # /volume1/docker/unlock-schedule/secrets
+      # Make sure the service account that runs this container has read-only access to this location
+      - /volume1/docker/unlock-schedule/secrets:/secrets:ro
     read_only: true
     tmpfs:
       - /tmp

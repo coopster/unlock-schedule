@@ -1,0 +1,7 @@
+services:
+  unlock-schedule:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        APP_VERSION: ${APP_VERSION:-dev}

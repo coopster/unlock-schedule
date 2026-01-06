@@ -116,16 +116,31 @@ The DS720+ runs **x86_64**, and we deploy using Docker.
    `/volume1/docker/unlock-schedule/`
 
 2. Copy into it:
-   - `main.py`
-   - `requirements.txt`
-   - `Dockerfile`
    - `docker-compose.yml`
-   - `README.md`
+   - `.env`
 
 3. Create a `secrets/` subfolder somewhere on the Synology NAS where only your build and run account can read it, and put your Google service-account JSON there:  
    `/volume1/docker/unlock-schedule/secrets/service-account.json`
 
-### 2. Build and Run (Option A: Docker Compose)
+### 2. Build on Mac (Apple Silicon) for Synology (x86_64)
+
+From your Mac (M1), build an `amd64` image and export it:
+
+```bash
+APP_VERSION=staging-001 OUTPUT=tar ./build.sh
+```
+
+This produces a tarball in `dist/` (for example `dist/unlock-schedule_staging-001_linux-amd64.tar`).
+
+Copy it to your staging NAS, then load it:
+
+```bash
+docker load -i unlock-schedule_staging-001_linux-amd64.tar
+```
+
+Repeat the same copy/load process for your production NAS when you’re ready for production.
+
+### 3. Run on Synology (Container Manager Project)
 
 On Synology **Container Manager**:
 
@@ -133,16 +148,8 @@ On Synology **Container Manager**:
 - Point to `/volume1/docker/unlock-schedule/`.
 - Deploy.
 
-This builds and runs the container as defined in `docker-compose.yml`.
+This runs the preloaded image referenced in `docker-compose.yml`.
 
-### 3. Build and Run (Option B: CLI)
-
-SSH into the Synology and run:
-
-```bash
-cd /volume1/docker/unlock-schedule
-docker compose up -d --build
-```
 
 ### 4. Access the app
 
@@ -217,3 +224,4 @@ python -m unittest discover -s tests -q
 - Agent feature to update HMS with this schedule
 - Manage schedule for periodically synchronizing HMS with this calendar
 - Audit logging
+- Authentication

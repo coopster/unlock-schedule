@@ -9,6 +9,8 @@ fi
 
 docker rm -f unlock-schedule >/dev/null 2>&1 || true
 
+APP_VERSION="${APP_VERSION:-latest}"
+
 docker run -d \
   --name unlock-schedule \
   -p 8000:8000 \
@@ -20,4 +22,4 @@ docker run -d \
   --read-only \
   --tmpfs /tmp \
   --restart unless-stopped \
-  unlock-schedule:latest
+  "unlock-schedule:${APP_VERSION}"
