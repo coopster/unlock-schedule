@@ -1,22 +1,21 @@
 from __future__ import annotations
 
 import os
-from typing import Optional
 from zoneinfo import ZoneInfo
 
 
 # The calendar we use is the PSCRC "Building Access" calendar, which our service account has access to
 CALENDAR_ID = os.environ.get(
-    "HMS_UNLOCK_CALENDAR_ID",
+    "CALENDAR_ID",
     "494d928efa8c2b71c2212addcf885d61722f8d75287588b4d7ed5e0c11380b7f@group.calendar.google.com",
 )
 
 # Path to service account JSON key file: treat as secret
-# export GOOGLE_APPLICATION_CREDENTIALS=/path/to/key.json
-SERVICE_ACCOUNT_FILE = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "")
+# export GCAL_SERVICE_ACCOUNT_JSON=/path/to/key.json
+SERVICE_ACCOUNT_FILE = os.environ.get("GCAL_SERVICE_ACCOUNT_JSON", "")
 
 SCOPES = ["https://www.googleapis.com/auth/calendar.readonly"]
-TZ = ZoneInfo(os.environ.get("HMS_UNLOCK_TZ", "America/New_York"))
+TZ = ZoneInfo(os.environ.get("DEFAULT_TIMEZONE", "America/New_York"))
 
 # Default padding (can be overridden via CLI / app)
 DEFAULT_PAD_BEFORE_MIN = int(os.environ.get("HMS_UNLOCK_PAD_BEFORE_MIN", "0"))

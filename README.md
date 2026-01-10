@@ -110,6 +110,8 @@ Visit with your browser: [http://localhost:8000](http://localhost:8000)
 
 The DS720+ runs **x86_64**, and we deploy using Docker.
 
+Prepare the .env file to include `APP_VERSION=<VERSION>` where the version is something like 0.1.0.
+
 ### 1. Prepare files on Synology
 
 1. Create a folder:  
@@ -119,37 +121,34 @@ The DS720+ runs **x86_64**, and we deploy using Docker.
    - `docker-compose.yml`
    - `.env`
 
-3. Create a `secrets/` subfolder somewhere on the Synology NAS where only your build and run account can read it, and put your Google service-account JSON there:  
+3. Create a `secrets/` subfolder and put your Google service-account JSON there:  
    `/volume1/docker/unlock-schedule/secrets/service-account.json`
+
+4. Create a `images` subfolder where you will put your docker image file.
 
 ### 2. Build on Mac (Apple Silicon) for Synology (x86_64)
 
-From your Mac (M1), build an `amd64` image and export it:
+From your Mac (M1), build an `amd64` image and version it:
 
 ```bash
-APP_VERSION=staging-001 OUTPUT=tar ./build.sh
+APP_VERSION=<VERSION> ./build.sh
 ```
 
-This produces a tarball in `dist/` (for example `dist/unlock-schedule_staging-001_linux-amd64.tar`).
+This produces a docker image file in `dist/unlock-schedule_<VERSION>_linux/amd64.tar`
 
-Copy it to your staging NAS, then load it:
-
-```bash
-docker load -i unlock-schedule_staging-001_linux-amd64.tar
-```
-
-Repeat the same copy/load process for your production NAS when you’re ready for production.
+Copy the `amd64.tar` file to your staging NAS in the `images` folder, then load it with the Synology Container Manager. This creates the image in its local registry.
 
 ### 3. Run on Synology (Container Manager Project)
 
 On Synology **Container Manager**:
 
 - Go to **Projects** → **Add**.
-- Point to `/volume1/docker/unlock-schedule/`.
-- Deploy.
+- Point to `/volume1/docker/unlock-schedule/` where your `docker-compose` file exists, naming the image you just created.
+- Build (which then runs).
 
 This runs the preloaded image referenced in `docker-compose.yml`.
 
+*Note: You don't need to use the web proxy for just local reference.*
 
 ### 4. Access the app
 
@@ -160,15 +159,15 @@ Visit:
 
 ## Environment Variables
 
+Defined in the `.env` file.
+
 | Variable | Purpose | Default |
 |----------|---------|---------|
 | `CALENDAR_ID` | Calendar to read (set in `.env` for local / `env_file` for Docker) | *(required for this repo’s `.env` workflow)* |
-| `GCAL_SERVICE_ACCOUNT_JSON` | Path inside container to the service account JSON | `/secrets/service-account.json` |
+| `GCAL_SERVICE_ACCOUNT_JSON` | Path to the service account JSON key file | `/secrets/service-account.json` |
 
 ## Version
 
-- Default version lives in `unlock_schedule/version.py`.
-- Override at runtime with `UNLOCK_SCHEDULE_VERSION=...` (or `APP_VERSION=...`).
 - Docker builds bake in a version via `APP_VERSION=... ./build.sh` (or set `APP_VERSION` when running `docker compose build`).
 
 ---
@@ -177,7 +176,7 @@ Visit:
 
 - The container runs as a **non-root user**.
 - The filesystem is **read-only** except for `/tmp`.
-- Secrets are mounted read-only from `./secrets/` accessible only to this user.
+- Secrets should be mounted read-only from `./secrets/` accessible only to this user.
 
 ---
 

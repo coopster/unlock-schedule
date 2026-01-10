@@ -13,22 +13,22 @@ from unlock_schedule.config import CALENDAR_ID, SCOPES
 def build_calendar_service(service_account_file: str):
     if not service_account_file:
         raise SystemExit(
-            "Set GOOGLE_APPLICATION_CREDENTIALS to your service account JSON key path.\n"
+            "Set GCAL_SERVICE_ACCOUNT_JSON to your service account JSON key path.\n"
             "Example:\n"
-            "  export GOOGLE_APPLICATION_CREDENTIALS=/path/to/key.json"
+            "  export GCAL_SERVICE_ACCOUNT_JSON=/path/to/key.json"
         )
 
     key_path = Path(service_account_file).expanduser()
     if not key_path.exists():
         raise SystemExit(
-            "GOOGLE_APPLICATION_CREDENTIALS points to a file that does not exist.\n"
+            "Service account credentials path points to a file that does not exist.\n"
             f"Got: {service_account_file}\n"
             "Fix:\n"
-            "  export GOOGLE_APPLICATION_CREDENTIALS=/absolute/path/to/service-account-key.json"
+            "  export GCAL_SERVICE_ACCOUNT_JSON=/absolute/path/to/service-account-key.json"
         )
     if not key_path.is_file():
         raise SystemExit(
-            "GOOGLE_APPLICATION_CREDENTIALS must point to a JSON key file.\n"
+            "Credentials path must point to a JSON key file.\n"
             f"Got: {service_account_file}"
         )
 
